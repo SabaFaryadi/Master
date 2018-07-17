@@ -107,6 +107,14 @@ class Robot(object):
         #Packet 100 contains all sensor data.
         self.robot.get_packet(100)
 
+    def _get_battery_status(self):
+        self.robot.get_packet(100)
+        return self.robot.sensor_state['battery charge']
+
+    def _get_battery_capacity(self):
+        self.robot.get_packet(100)
+        return self.robot.sensor_state['battery capacity']
+
 class _Error(Exception):
     """Error"""
     pass
