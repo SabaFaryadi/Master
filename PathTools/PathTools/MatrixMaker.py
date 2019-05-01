@@ -8,8 +8,8 @@ import numpy as np
 import os
 
 #width, the number of vertical sections. length, horizontal
-w = 3
-l = 3
+w = 5
+l = 8
 #number of segments per sections
 seg = 5
 
