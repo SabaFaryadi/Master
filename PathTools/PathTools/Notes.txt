@@ -1,0 +1,6 @@
+Notes:
+Matrix Maker creates the matrix that shows the connections between all the points. It outputs the matrix file and will give an error if there is no matrix file. It writes over the file each time it runs.
+
+Coordinate Generator make a file with two rows. Each column represents a point 0 to p and the first row is the x position and the second row is the y position. This code makes the file coordinates and will fail to run if the file isn't present. It also will write over the file each time it runs. 
+
+Matrix maker can generate a matrix for any number of maneuvers inside a unit. Coordinate generator only works for the path shown in Conventions.JPG
