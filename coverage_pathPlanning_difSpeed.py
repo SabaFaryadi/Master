@@ -65,26 +65,21 @@ def shortest_path(graph, origin, destination):
 def Voronoi(n,position_Robot1,position_Robot2):
     subnodes_Robot1 = list()
     subnodes_Robot2 = list()
-    robotSpeed=[20,20]
-    #robotCharge=[100,100]
+    robotSpeed=[20,20]        #define speed for [robot1,robot2], to have different speed, should change it
     for j in range(0, n):
         if j == position_Robot1 or j == position_Robot2:
             continue
         else:
             Robot1_distance = (shortest_path(Graph, position_Robot1, j))
-                #print('robot1 to node', j, '=', (Robot1_distance[0]))
 
             Robot2_distance = (shortest_path(Graph, position_Robot2, j))
-                #print('robot2 to node', j, '=', Robot2_distance[0])
+
             t1=(Robot1_distance[0])/robotSpeed[0]
             t2=(Robot2_distance[0])/robotSpeed[1]
 
             if t1 <=t2:
-
-                #if ((Robot1_distance[0])/robotSpeed[0])<robotCharge[0]:
                 subnodes_Robot1.append(j)
-            #elif ((Robot1_distance[0])/robotSpeed[0])<robotCharge[1]:
-                    #subnodes_Robot2.append(j)
+
             elif t2<t1:
                 subnodes_Robot2.append(j)
 
@@ -105,7 +100,6 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
     for node in range(0,n):
         if points[position_Robot, node]!=0:
             Robot_neighbors.append(node)
-    #print(Robot_neighbors)
     print ('neighbors',Robot_neighbors)
     subnodes_Robot.append(position_Robot)
     for neighbor in Robot_neighbors:
@@ -115,11 +109,11 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
             else:
                 distance = (shortest_path(Graph, neighbor, vertex))
                 costNeighbor_Robot.append(cost_function(priorityValue[vertex], distance[0]))
-        #print(costNeighbor_Robot)
+
         totalCost_voronoi_Robot[neighbor]=sum(costNeighbor_Robot)
 
         next_position=min(totalCost_voronoi_Robot.items(), key=lambda x: x[1])[0]
-    #print(initialCost_Robot, totalCost_voronoi_Robot[next_position])
+
     if initialCost_Robot<=totalCost_voronoi_Robot[next_position]:
         nextBest_position=position_Robot
     else:
