@@ -129,7 +129,8 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
 
 if __name__ == '__main__':
     Graph = Graph()
-    graph = np.zeros((214, 214))
+###This part is for generating Graph for 5*8 plots, it should be replaced with MatrixMaker.py to generate a graph for l*w plots
+'''graph = np.zeros((214, 214))
     for j in range(0, 214):
         if j % 26 == 0:
             for p in range(0, 5):
@@ -182,7 +183,7 @@ if __name__ == '__main__':
     graph[130][104] = graph[104][130] = 1.75
     graph[130][156] = graph[156][130] = 1.75
     graph[182][156] = graph[156][182] = 1.75
-    graph[208][156] = graph[208][182] = 1.75
+    graph[208][156] = graph[208][182] = 1.75'''
     points = graph
     # print(points)
     position_Robot1 = input('Enter Roomba A position:')
@@ -193,7 +194,9 @@ if __name__ == '__main__':
     position_Robot2 = int(position_Robot2)
     goal1 = int(goal1)
     goal2 = int(goal2)
-    X = list()
+
+##### This part is just for 5*8 plots, it should be replaced with CordinateGenerator.py to generate l*w plots
+'''    X = list()
     Y = list()
     for j in range(1, 26):
         for i in range(1, 17):
@@ -229,7 +232,7 @@ if __name__ == '__main__':
                     Y.append(y)
 
                     # print(X)
-                    # print(Y)
+                    # print(Y)'''
     rowNumber = 0
     columnNumber = 0
     priorityValue = dict()
@@ -244,17 +247,10 @@ if __name__ == '__main__':
                 Graph.add_edge(i, j, points[i, j])
         priorityValue[i]=0.01
 
-    #priorityValue[goal2 + 6] = 20000
-    #priorityValue[goal2 - 1] = 10000
+
     priorityValue[goal1] = 10000000
     priorityValue[goal2] = 100000
-    #priorityValue[goal1 + 6] = 200000
-    #priorityValue[goal1 - 1] = 100000
 
-    print (priorityValue)
-    print(points[40,46])
-    step=list()
-    Cost=list()
     path_Robot1=list()
     path_Robot2 = list()
     i=0
