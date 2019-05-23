@@ -116,17 +116,15 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
             else:
                 distance = (shortest_path(Graph, neighbor, vertex))
                 costNeighbor_Robot.append(cost_function(priorityValue[vertex], distance[0]))
-        #print(costNeighbor_Robot)
         totalCost_voronoi_Robot[neighbor]=sum(costNeighbor_Robot)
 
         next_position=min(totalCost_voronoi_Robot.items(), key=lambda x: x[1])[0]
-    #print(initialCost_Robot, totalCost_voronoi_Robot[next_position])
     if initialCost_Robot<=totalCost_voronoi_Robot[next_position]:
         nextBest_position=position_Robot
     else:
         nextBest_position=next_position
     return nextBest_position,initialCost_Robot
-
+# sTATE DEPENDENT RICCATI EQUATION TO CONTROL THE ROBOT TO MOVE ALONG THE LINE
 def SDRE(X_path,Y_path):
     delta_t = 0.01
     t = 10
@@ -179,13 +177,11 @@ def SDRE(X_path,Y_path):
                 A = A - 0.05 * np.eye(8, dtype=int)
                 R = 0.0001 * np.eye(2, dtype=int)
                 K,S,E = controlpy.synthesis.controller_lqr(A, B.transpose(), Q, R)
-                #print((K))
                 u=np.array([x_initial[j,time],y_initial[j,time],tetha[j,time],zd1[j,time],zd2[j,time],yd1[j,time],yd2[j,time],wd1[j,time]])
-                #print(type(u))
                 U=np.dot(-K,u.transpose())
 
-                v[j,time]=U[0]
-                w[j,time]=U[1]
+                v[j,time]=U[0]#Linear velocity
+                w[j,time]=U[1]#Angular velocity
 
                 x_initial[j,time+1]=x_initial[j,time]+delta_t*(U[0]*math.cos(tetha[j,time]))
                 y_initial[j,time+1]=y_initial[j,time]+delta_t*(U[0]*math.sin(tetha[j,time]))
@@ -196,3 +192,10 @@ def SDRE(X_path,Y_path):
                 yd2[j,time+1]=yd2[j,time]
                 wd1[j,time+1]=wd1[j,time]
     return x_initial,y_initial,v,w
+
+# Converting linear and angular velocities to the left and right velocities
+def Inverse_Kinematics(V,W,d):
+    V_right=V+W*(d/2)
+    V_left=V-W*(d/2)
+    return V_right,V_left
+
