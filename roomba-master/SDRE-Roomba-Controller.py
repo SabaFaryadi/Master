@@ -6,7 +6,7 @@
 # 0.5*258 == 129mm radius
 
 import os, sys
-#import create
+import create
 import time
 from collections import defaultdict, deque
 import numpy as np
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import math
 import controlpy
 
-'''ROOMBA_PORT = "/dev/ttyUSB0"
+ROOMBA_PORT = "/dev/ttyUSB0"
 
 robot = create.Create(ROOMBA_PORT, BAUD_RATE=115200)
 robot.toSafeMode()
@@ -29,7 +29,7 @@ lb_front_left = robot.senseFunc(create.LIGHTBUMP_FRONT_LEFT)
 lb_center_left = robot.senseFunc(create.LIGHTBUMP_CENTER_LEFT)
 lb_center_right = robot.senseFunc(create.LIGHTBUMP_CENTER_RIGHT)
 lb_front_right = robot.senseFunc(create.LIGHTBUMP_FRONT_RIGHT)
-lb_right = robot.senseFunc(create.LIGHTBUMP_RIGHT)'''
+lb_right = robot.senseFunc(create.LIGHTBUMP_RIGHT)
 # dist_fun = robot.senseFunc(create.DISTANCE)
 
 # Generating plots
@@ -39,12 +39,12 @@ lb_right = robot.senseFunc(create.LIGHTBUMP_RIGHT)'''
 # d=distance between points
 def CordinateGenerator(w,l,seg):
     # distance between points
-    a = 1
-    b = 1
-    c = 1 / 3
-    d = 1 / 3
-    e = 1 / 3
-    f = 1 / 3
+    a = 100
+    b = 100
+    c = 100 / 3
+    d = 100 / 3
+    e = 100 / 3
+    f = 100 / 3
 
     # X,Y coordinates. Set to a size to accomidate p the total number of points
     p = (w + 1) * (l + 1) + w * l * (seg - 1)
@@ -317,17 +317,17 @@ def SDRE(X_path,Y_path):
                 v[j,time]=U[0]#Linear velocity
                 w[j,time]=U[1]#Angular velocity
 
-                x_initial[j, time + 1] = x_initial[j, time] + delta_t * (U[0] * math.cos(tetha[j, time]))
+                '''x_initial[j, time + 1] = x_initial[j, time] + delta_t * (U[0] * math.cos(tetha[j, time]))
                 y_initial[j, time + 1] = y_initial[j, time] + delta_t * (U[0] * math.sin(tetha[j, time]))
                 tetha[j, time + 1] = tetha[j, time] + delta_t * U[1]
                 zd1[j, time + 1] = zd1[j, time] + delta_t * zd2[j, time]
                 zd2[j, time + 1] = zd2[j, time]
                 yd1[j, time + 1] = yd1[j, time] + delta_t * yd2[j, time]
                 yd2[j, time + 1] = yd2[j, time]
-                wd1[j, time + 1] = wd1[j, time]
+                wd1[j, time + 1] = wd1[j, time]'''
 
 
-                '''px,py,th=robot.getPose() # Get current position of the robot
+                px,py,th=robot.getPose() # Get current position of the robot
 
                 x_initial[j,time+1]=px
                 y_initial[j,time+1]=py
@@ -336,7 +336,7 @@ def SDRE(X_path,Y_path):
                 zd2[j,time+1]=zd2[j,time]
                 yd1[j,time+1]=yd1[j,time]+delta_t*yd2[j,time]
                 yd2[j,time+1]=yd2[j,time]
-                wd1[j,time+1]=wd1[j,time]'''
+                wd1[j,time+1]=wd1[j,time]
     return x_initial,y_initial,v,w
 
 # Converting linear and angular velocities to the left and right velocities
@@ -522,8 +522,19 @@ if __name__ == '__main__':
     #plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.scatter(trajectory_1[0], trajectory_1[1])
     plt.scatter(trajectory_2[0], trajectory_2[1])
-
     plt.show()
+    v_Robot1=trajectory_1[2]
+    w_Robot1=trajectory_1[3]
+    robotDiameter=25.8
+    for v in range(0,len(v_Robot1)):
+        vR,vL=Inverse_Kinematics(v_Robot1[v],w_Robot1[w],robotDiameter)
+        robot.setWheelVelocities(vR,vL)
+        time.sleep(0.01)
+    robot.go(0, 0)
+    robot.close()
+
+
+
 
 
 
