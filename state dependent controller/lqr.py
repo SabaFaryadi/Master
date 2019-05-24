@@ -26,3 +26,9 @@ print(K)
 x=np.zeros((1,5))
 x[0,1]=5
 print(x)
+
+X=np.array([1,2,3])
+Y=np.array([[0,1,1],[1,0,0],[0,1,1]])
+Z,S,T=np.dot(X,Y)
+print (type(Z))
+print (type(K[0]))

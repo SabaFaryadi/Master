@@ -14,6 +14,137 @@ import matplotlib.pyplot as plt
 import math
 import controlpy
 
+'''ROOMBA_PORT = "/dev/ttyUSB0"
+
+robot = create.Create(ROOMBA_PORT, BAUD_RATE=115200)
+robot.toSafeMode()
+MAX_FORWARD = 50  # in cm per second
+MAX_ROTATION = 200  # in cm per second
+SPEED_INC = 10  # increment in percent
+# start 50% speed
+
+
+lb_left = robot.senseFunc(create.LIGHTBUMP_LEFT)
+lb_front_left = robot.senseFunc(create.LIGHTBUMP_FRONT_LEFT)
+lb_center_left = robot.senseFunc(create.LIGHTBUMP_CENTER_LEFT)
+lb_center_right = robot.senseFunc(create.LIGHTBUMP_CENTER_RIGHT)
+lb_front_right = robot.senseFunc(create.LIGHTBUMP_FRONT_RIGHT)
+lb_right = robot.senseFunc(create.LIGHTBUMP_RIGHT)'''
+# dist_fun = robot.senseFunc(create.DISTANCE)
+
+# Generating plots
+# w=width, the number of vertical sections
+# l=length, horizontal
+# seg=number of segments per sections
+# d=distance between points
+def CordinateGenerator(w,l,seg):
+    # distance between points
+    a = 1
+    b = 1
+    c = 1 / 3
+    d = 1 / 3
+    e = 1 / 3
+    f = 1 / 3
+
+    # X,Y coordinates. Set to a size to accomidate p the total number of points
+    p = (w + 1) * (l + 1) + w * l * (seg - 1)
+    x = np.zeros(p, dtype=float)
+    y = np.zeros(p, dtype=float)
+
+    # Loops through every point. Rx and Ry are the running x and y positions
+    # n=0 is assumed to be the origin
+    n = 0
+    Rx = 0
+    Ry = 0
+    for i in range(0, l):
+        x[n] = Rx
+        y[n] = Ry
+        n = n + 1
+        for j in range(0, w):
+            Rx = Rx + c
+            Ry = Ry + d
+            x[n] = Rx
+            y[n] = Ry
+            n = n + 1
+
+            Rx = Rx + e
+            x[n] = Rx
+            y[n] = Ry
+            n = n + 1
+
+            Ry = Ry + f
+            x[n] = Rx
+            y[n] = Ry
+            n = n + 1
+
+            Rx = Rx - e
+            x[n] = Rx
+            y[n] = Ry
+            n = n + 1
+
+            Rx = Rx - c
+            Ry = Ry + d
+            x[n] = Rx
+            y[n] = Ry
+            n = n + 1
+        Ry = 0
+        Rx = Rx + a
+
+    # clean up for the last row since the numbering pattern breaks
+    Ry = 0
+    for i in range(0, w + 1):
+        x[n] = Rx
+        y[n] = Ry
+        Ry = Ry + b
+        n = n + 1
+    return x,y
+def MatrixMaker(w,l,seg,d):
+    # M, our matrix. Set to a size to accomidate p the total number of points
+    p = (w + 1) * (l + 1) + w * l * (seg - 1)
+    m = np.zeros([p, p], dtype=int)
+
+    # create links between vertical bidirectional paths
+
+    n = 0
+    for i in range(0, l):
+        for j in range(0, w):
+            m[n, n + seg] = d
+            m[n + seg, n] = d
+            n = n + seg
+        n = n + 1
+    # this handles the last row since the numbering becomes incosistent
+    for i in range(0, w):
+        m[n, n + 1] = d
+        m[n + 1, n] = d
+        n = n + 1
+
+    # create horizontal links between bidirectional paths
+    n = 0
+    for i in range(0, w):
+        n = seg * i
+        for j in range(1, l):
+            m[n, n + 1 + w * seg] = d
+            m[n + 1 + w * seg, n] = d
+            n = n + 1 + w * seg
+
+    # this handles the last row since the numbering becomes inconsistent
+    n = (1 + w * seg) * l
+    h = (1 + w * seg) * (l - 1)
+    for i in range(0, w):
+        m[n, h] = d
+        m[h, n] = d
+        n = n + 1
+        h = h + seg
+
+    # create all directional paths
+    n = 0
+    for i in range(0, l):
+        for j in range(0, seg * w):
+            m[n + 1, n] = d
+            n = n + 1
+        n = n + 1
+    return m
+
 # Generating a directed graph for plots
 class Graph(object):
     def __init__(self):
@@ -183,9 +314,11 @@ def SDRE(X_path,Y_path):
                 v[j,time]=U[0]#Linear velocity
                 w[j,time]=U[1]#Angular velocity
 
-                x_initial[j,time+1]=x_initial[j,time]+delta_t*(U[0]*math.cos(tetha[j,time]))
-                y_initial[j,time+1]=y_initial[j,time]+delta_t*(U[0]*math.sin(tetha[j,time]))
-                tetha[j,time+1]=tetha[j,time]+delta_t*U[1]
+                px,py,th=robot.getPose() # Get current position of the robot
+
+                x_initial[j,time+1]=px
+                y_initial[j,time+1]=py
+                tetha[j,time+1]=th
                 zd1[j,time+1]=zd1[j,time]+delta_t*zd2[j,time]
                 zd2[j,time+1]=zd2[j,time]
                 yd1[j,time+1]=yd1[j,time]+delta_t*yd2[j,time]
@@ -198,4 +331,32 @@ def Inverse_Kinematics(V,W,d):
     V_right=V+W*(d/2)
     V_left=V-W*(d/2)
     return V_right,V_left
+
+if __name__ == '__main__':
+    # Generate all nodes and edges
+    graph = Graph()
+    points=MatrixMaker(3,3,5,1)
+    x_cordinates,y_cordinates=CordinateGenerator(3,3,5)
+    #Get the location of robots and regions of interests
+    position_Robot1 = input('Enter Roomba A position:')
+    position_Robot2 = input('Enter Roomba B position:')
+    goal1 = input('What is the first region of interest?')
+    goal2 = input('What is the second region of interest?')
+    position_Robot1 = int(position_Robot1)
+    position_Robot2 = int(position_Robot2)
+    goal1 = int(goal1)
+    goal2 = int(goal2)
+
+    rowNumber = 0
+    columnNumber = 0
+    priorityValue = dict()
+    for row in points:
+        graph.add_node(rowNumber)
+        rowNumber = rowNumber + 1
+    n = rowNumber
+    print(n)
+    for i in range(0, n):
+        for j in range(0, n):
+            if points[i, j] != 0:
+                graph.add_edge(i, j, points[i, j])
 
