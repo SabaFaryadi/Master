@@ -6,7 +6,7 @@
 # 0.5*258 == 129mm radius
 
 import os, sys
-import create
+#import create
 import time
 from collections import defaultdict, deque
 import numpy as np
@@ -212,8 +212,8 @@ def Voronoi(n,position_Robot1,position_Robot2):
         if j == position_Robot1 or j == position_Robot2:
             continue
         else:
-            Robot1_distance = (shortest_path(Graph, position_Robot1, j))
-            Robot2_distance = (shortest_path(Graph, position_Robot2, j))
+            Robot1_distance = (shortest_path(graph, position_Robot1, j))
+            Robot2_distance = (shortest_path(graph, position_Robot2, j))
             if (Robot1_distance[0]) <=(Robot2_distance[0]):
                 subnodes_Robot1.append(j)
 
@@ -230,7 +230,7 @@ def cost_function(cost,distance):
 def finding_nextPoint(subnodes_Robot,position_Robot,n):
     initialCost_Robot=list()
     for vertex in subnodes_Robot:
-        distance = (shortest_path(Graph, position_Robot, vertex))
+        distance = (shortest_path(graph, position_Robot, vertex))
         initialCost_Robot.append(cost_function(priorityValue[vertex],distance[0]))
     initialCost_Robot=sum(initialCost_Robot)
     totalCost_voronoi_Robot=dict()
@@ -245,7 +245,7 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
         for vertex in subnodes_Robot:
             if neighbor==vertex:continue
             else:
-                distance = (shortest_path(Graph, neighbor, vertex))
+                distance = (shortest_path(graph, neighbor, vertex))
                 costNeighbor_Robot.append(cost_function(priorityValue[vertex], distance[0]))
         totalCost_voronoi_Robot[neighbor]=sum(costNeighbor_Robot)
 
@@ -255,7 +255,7 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
     else:
         nextBest_position=next_position
     return nextBest_position,initialCost_Robot
-# sTATE DEPENDENT RICCATI EQUATION TO CONTROL THE ROBOT TO MOVE ALONG THE LINE
+# STATE DEPENDENT RICCATI EQUATION TO CONTROL THE ROBOT TO MOVE ALONG THE LINE
 def SDRE(X_path,Y_path):
     delta_t = 0.01
     t = 10
@@ -314,7 +314,7 @@ def SDRE(X_path,Y_path):
                 v[j,time]=U[0]#Linear velocity
                 w[j,time]=U[1]#Angular velocity
 
-                px,py,th=robot.getPose() # Get current position of the robot
+                '''px,py,th=robot.getPose() # Get current position of the robot
 
                 x_initial[j,time+1]=px
                 y_initial[j,time+1]=py
@@ -323,7 +323,7 @@ def SDRE(X_path,Y_path):
                 zd2[j,time+1]=zd2[j,time]
                 yd1[j,time+1]=yd1[j,time]+delta_t*yd2[j,time]
                 yd2[j,time+1]=yd2[j,time]
-                wd1[j,time+1]=wd1[j,time]
+                wd1[j,time+1]=wd1[j,time]'''
     return x_initial,y_initial,v,w
 
 # Converting linear and angular velocities to the left and right velocities
@@ -336,7 +336,7 @@ if __name__ == '__main__':
     # Generate all nodes and edges
     graph = Graph()
     points=MatrixMaker(3,3,5,1)
-    x_cordinates,y_cordinates=CordinateGenerator(3,3,5)
+    X,Y=CordinateGenerator(3,3,5)
     #Get the location of robots and regions of interests
     position_Robot1 = input('Enter Roomba A position:')
     position_Robot2 = input('Enter Roomba B position:')
@@ -359,4 +359,153 @@ if __name__ == '__main__':
         for j in range(0, n):
             if points[i, j] != 0:
                 graph.add_edge(i, j, points[i, j])
+        priorityValue[i] = 0.01
+#Set values to use in cost function
+    priorityValue[goal1] = 10000000
+    priorityValue[goal2] = 100000
+
+    step = list()
+    Cost = list()
+    path_Robot1 = list()
+    path_Robot2 = list()
+    i = 0
+    for p in range(1, 22):
+
+        if p == 1:# finding first partitioning befor robots move
+            voronoiSubsets = Voronoi(n, position_Robot1, position_Robot2)
+            initial_subnodes_Robot1 = voronoiSubsets[0]
+            initial_subnodes_Robot2 = voronoiSubsets[1]
+            X_Robot1 = list()
+            Y_Robot1 = list()
+            for n in initial_subnodes_Robot1:
+                X_Robot1.append(X[n])
+                Y_Robot1.append(Y[n])
+            X_Robot2 = list()
+            Y_Robot2 = list()
+            for n in initial_subnodes_Robot2:
+                X_Robot2.append(X[n])
+                Y_Robot2.append(Y[n])
+            #Plot first partitioning
+            plt.plot(X_Robot1, Y_Robot1, 'rs', markersize=12, label='Robot1_first partition')
+            plt.plot(X_Robot2, Y_Robot2, 'bs', markersize=12, label='Robot2_first partition')
+            plt.plot(X[position_Robot1], Y[position_Robot1], 'cs', markersize=20)
+            plt.plot(X[position_Robot2], Y[position_Robot2], 'cs', markersize=20)
+
+            for x in range(0, len(X)):
+                if x == position_Robot1:
+                    plt.annotate('RoombaA', xy=(X[position_Robot1], Y[position_Robot1]), size=10)
+                    plt.annotate(i, xy=(X[x], Y[x]), color='c', size=1)
+                elif x == position_Robot2:
+                    plt.annotate('RoombaB', xy=(X[position_Robot2], Y[position_Robot2]), size=10)
+                    plt.annotate(i, xy=(X[x], Y[x]), color='c', size=1)
+
+                elif x == goal1:
+                    plt.annotate('goal1', xy=(X[goal1], Y[goal1]), size=12)
+                    plt.annotate(i, xy=(X[x], Y[x]), color='w', size=1)
+                elif x == goal2:
+                    plt.annotate('goal2', xy=(X[goal2], Y[goal2]), size=12)
+                    plt.annotate(i, xy=(X[x], Y[x]), color='w', size=1)
+
+                else:
+                    plt.annotate(i, xy=(X[x], Y[x]))
+                i = i + 1
+            plt.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
+            plt.show()
+
+        else:
+            voronoiSubsets = Voronoi(n, nextBest_position1[0], nextBest_position2[0])
+        subnodes_Robot1 = voronoiSubsets[0]
+        subnodes_Robot2 = voronoiSubsets[1]
+        if p == 1:
+            nextBest_position1 = finding_nextPoint(subnodes_Robot1, position_Robot1, n)
+            nextBest_position2 = finding_nextPoint(subnodes_Robot2, position_Robot2, n)
+
+            path_Robot1.append(nextBest_position1[0])
+
+            path_Robot2.append(nextBest_position2[0])
+
+
+
+        else:
+            if nextBest_position1[0] == goal2 or nextBest_position2[0] == goal2:
+                print('stop')
+            else:
+                nextBest_position1 = finding_nextPoint(subnodes_Robot1, nextBest_position1[0], n)
+                nextBest_position2 = finding_nextPoint(subnodes_Robot2, nextBest_position2[0], n)
+                priorityValue[nextBest_position1[0]] = 0.01
+                priorityValue[nextBest_position2[0]] = 0.01
+
+        print('step:', p)
+        print('nextBest_position1:', '', nextBest_position1[0], ',', nextBest_position1[1])
+        print('nextBest_position2:', '', nextBest_position2[0], ',', nextBest_position2[1])
+        totalCost = nextBest_position1[1] + nextBest_position2[1]
+        Cost.append(totalCost)
+        step.append(p)
+
+        if path_Robot1[-1] != nextBest_position1[0]:
+            path_Robot1.append(nextBest_position1[0])
+
+        if path_Robot2[-1] != nextBest_position2[0]:
+            path_Robot2.append(nextBest_position2[0])
+
+    X_subnodes_Robot1 = list()
+    Y_subnodes_Robot1 = list()
+    for n in subnodes_Robot1:
+        X_subnodes_Robot1.append(X[n])
+        Y_subnodes_Robot1.append(Y[n])
+    X_subnodes_Robot2 = list()
+    Y_subnodes_Robot2 = list()
+    for n in subnodes_Robot2:
+        X_subnodes_Robot2.append(X[n])
+        Y_subnodes_Robot2.append(Y[n])
+
+    print(path_Robot1)
+    print(path_Robot2)
+    i = 0
+    for x in range(0, len(X)):
+        if x == position_Robot1:
+            plt.annotate('RoombaA', xy=(X[position_Robot1], Y[position_Robot1]), size=12)
+            plt.annotate(i, xy=(X[x], Y[x]), color='c', size=1)
+        elif x == position_Robot2:
+            plt.annotate('RoombaB', xy=(X[position_Robot2], Y[position_Robot2]), size=12)
+            plt.annotate(i, xy=(X[x], Y[x]), color='c', size=1)
+            plt.annotate(i, xy=(X[x], Y[x]), color='c', size=1)
+        elif x == goal1:
+            plt.annotate('goal1', xy=(X[goal1], Y[goal1]), size=12)
+            plt.annotate(i, xy=(X[x], Y[x]), color='w', size=1)
+        elif x == goal2:
+            plt.annotate('goal2', xy=(X[goal2], Y[goal2]), size=12)
+            plt.annotate(i, xy=(X[x], Y[x]), color='w', size=1)
+        else:
+            plt.annotate(i, xy=(X[x], Y[x]))
+        i = i + 1
+
+    plt.plot(X_subnodes_Robot1, Y_subnodes_Robot1, 'rs', markersize=12, label='Robot1_partition')
+    plt.plot(X_subnodes_Robot2, Y_subnodes_Robot2, 'bs', markersize=12, label='Robot2_partition')
+
+    plt.plot(X[position_Robot1], Y[position_Robot1], 'cs', markersize=20)
+    plt.plot(X[position_Robot2], Y[position_Robot2], 'cs', markersize=20)
+
+    X_path1 = list()
+    Y_path1 = list()
+    X_path1.append(X[position_Robot1])
+    Y_path1.append(Y[position_Robot1])
+    for element in path_Robot1:
+        X_path1.append(X[element])
+        Y_path1.append(Y[element])
+    plt.plot(X_path1, Y_path1, 'r--', label='Robot1_path')
+    X_path2 = list()
+    Y_path2 = list()
+    X_path2.append(X[position_Robot2])
+    Y_path2.append(Y[position_Robot2])
+    for element in path_Robot2:
+        X_path2.append(X[element])
+        Y_path2.append(Y[element])
+    plt.plot(X_path2, Y_path2, 'r--', label='Robot2_path')
+    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+
+    plt.show()
+
+
+
 
