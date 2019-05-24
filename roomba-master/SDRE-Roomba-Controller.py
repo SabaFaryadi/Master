@@ -276,6 +276,8 @@ def SDRE(X_path,Y_path):
         y_final = Y_path[j + 1]
 
         if x!=x_final or y!=y_final:
+            if x==x_final:
+                x_final=x_final+0.001
 
             x_initial[j, 0] = x
             y_initial[j, 0] = y
@@ -284,6 +286,7 @@ def SDRE(X_path,Y_path):
 
             zd1[j,0]=x_initial[j,0]
             zd2[j,0]=(x_final-x_initial[j,0])/t
+
 
             m=(y_final-y_initial[j,0])/(x_final-x_initial[j,0])
             n=y_initial[j,0]-m*x_initial[j,0]
@@ -313,6 +316,16 @@ def SDRE(X_path,Y_path):
 
                 v[j,time]=U[0]#Linear velocity
                 w[j,time]=U[1]#Angular velocity
+
+                x_initial[j, time + 1] = x_initial[j, time] + delta_t * (U[0] * math.cos(tetha[j, time]))
+                y_initial[j, time + 1] = y_initial[j, time] + delta_t * (U[0] * math.sin(tetha[j, time]))
+                tetha[j, time + 1] = tetha[j, time] + delta_t * U[1]
+                zd1[j, time + 1] = zd1[j, time] + delta_t * zd2[j, time]
+                zd2[j, time + 1] = zd2[j, time]
+                yd1[j, time + 1] = yd1[j, time] + delta_t * yd2[j, time]
+                yd2[j, time + 1] = yd2[j, time]
+                wd1[j, time + 1] = wd1[j, time]
+
 
                 '''px,py,th=robot.getPose() # Get current position of the robot
 
@@ -493,7 +506,8 @@ if __name__ == '__main__':
     for element in path_Robot1:
         X_path1.append(X[element])
         Y_path1.append(Y[element])
-    plt.plot(X_path1, Y_path1, 'r--', label='Robot1_path')
+    #plt.plot(X_path1, Y_path1, 'b--', label='Robot1_path')
+
     X_path2 = list()
     Y_path2 = list()
     X_path2.append(X[position_Robot2])
@@ -501,8 +515,13 @@ if __name__ == '__main__':
     for element in path_Robot2:
         X_path2.append(X[element])
         Y_path2.append(Y[element])
-    plt.plot(X_path2, Y_path2, 'r--', label='Robot2_path')
-    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    #plt.plot(X_path2, Y_path2, 'r--', label='Robot2_path')
+
+    trajectory_1 = SDRE(X_path1,Y_path1)
+    trajectory_2 = SDRE(X_path2, Y_path2)
+    #plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    plt.scatter(trajectory_1[0], trajectory_1[1])
+    plt.scatter(trajectory_2[0], trajectory_2[1])
 
     plt.show()
 

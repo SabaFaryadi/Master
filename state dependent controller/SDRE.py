@@ -89,6 +89,8 @@ def SDRE(X_path,Y_path):
         y_final = Y_path[j + 1]
 
         if x!=x_final or y!=y_final:
+            if x==x_final:
+                x_final=x_final+0.01
 
             x_initial[j, 0] = x
             y_initial[j, 0] = y
@@ -97,6 +99,10 @@ def SDRE(X_path,Y_path):
 
             zd1[j,0]=x_initial[j,0]
             zd2[j,0]=(x_final-x_initial[j,0])/t
+
+
+
+
 
             m=(y_final-y_initial[j,0])/(x_final-x_initial[j,0])
             n=y_initial[j,0]-m*x_initial[j,0]
@@ -143,12 +149,12 @@ if __name__ == '__main__':
     x,y=CordinateGenerator(3,4,5)
     plt.scatter(x, y)
     #plt.show()
-    Xpath=[0.01,0,1,1.01]
+    Xpath=[0,0,1,1.01]
     Ypath=[0,1,1.01,2]
 
     trajectory=SDRE(Xpath,Ypath)
     #print(trajectory[2][0])
-    print (trajectory[3][0])
+    #print (trajectory[3][0])
     #print(trajectory[1])
     plt.scatter(trajectory[0],trajectory[1])
     plt.show()
