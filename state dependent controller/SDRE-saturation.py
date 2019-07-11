@@ -6,7 +6,7 @@
 # 0.5*258 == 129mm radius
 
 import os, sys
-import create
+#import create
 import time
 from collections import defaultdict, deque
 import numpy as np
@@ -14,22 +14,19 @@ import matplotlib.pyplot as plt
 import math
 import controlpy
 
-ROOMBA_PORT = "/dev/ttyUSB0"
-
+'''ROOMBA_PORT = "/dev/ttyUSB0"
 robot = create.Create(ROOMBA_PORT, BAUD_RATE=115200)
 robot.toSafeMode()
 MAX_FORWARD = 50  # in cm per second
 MAX_ROTATION = 200  # in cm per second
 SPEED_INC = 10  # increment in percent
 # start 50% speed
-
-
 lb_left = robot.senseFunc(create.LIGHTBUMP_LEFT)
 lb_front_left = robot.senseFunc(create.LIGHTBUMP_FRONT_LEFT)
 lb_center_left = robot.senseFunc(create.LIGHTBUMP_CENTER_LEFT)
 lb_center_right = robot.senseFunc(create.LIGHTBUMP_CENTER_RIGHT)
 lb_front_right = robot.senseFunc(create.LIGHTBUMP_FRONT_RIGHT)
-lb_right = robot.senseFunc(create.LIGHTBUMP_RIGHT)
+lb_right = robot.senseFunc(create.LIGHTBUMP_RIGHT)'''
 # dist_fun = robot.senseFunc(create.DISTANCE)
 
 # Generating plots
@@ -39,12 +36,12 @@ lb_right = robot.senseFunc(create.LIGHTBUMP_RIGHT)
 # d=distance between points
 def CordinateGenerator(w,l,seg):
     # distance between points
-    a = 100
-    b = 100
-    c = 100 / 3
-    d = 100 / 3
-    e = 100 / 3
-    f = 100 / 3
+    a = 120
+    b = 120
+    c = 120 / 3
+    d = 120/ 3
+    e = 120/ 3
+    f = 120/ 3
 
     # X,Y coordinates. Set to a size to accomidate p the total number of points
     p = (w + 1) * (l + 1) + w * l * (seg - 1)
@@ -54,7 +51,7 @@ def CordinateGenerator(w,l,seg):
     # Loops through every point. Rx and Ry are the running x and y positions
     # n=0 is assumed to be the origin
     n = 0
-    Rx = 0
+    Rx = 90
     Ry = 0
     for i in range(0, l):
         x[n] = Rx
@@ -214,10 +211,10 @@ def Voronoi(n,position_Robot1,position_Robot2):
         else:
             Robot1_distance = (shortest_path(graph, position_Robot1, j))
             Robot2_distance = (shortest_path(graph, position_Robot2, j))
-            if (Robot1_distance[0]) <=(Robot2_distance[0]):
+            if (Robot1_distance[0]) <(Robot2_distance[0]):
                 subnodes_Robot1.append(j)
 
-            elif (Robot2_distance[0])<(Robot1_distance[0]):
+            elif (Robot2_distance[0])<=(Robot1_distance[0]):
                 subnodes_Robot2.append(j)
 
     return subnodes_Robot1,subnodes_Robot2
@@ -256,9 +253,22 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
         nextBest_position=next_position
     return nextBest_position,initialCost_Robot
 # STATE DEPENDENT RICCATI EQUATION TO CONTROL THE ROBOT TO MOVE ALONG THE LINE
+
+#defining saturation function to make limitation for velocity
+def velocitySaturation(Vi,Vlim):
+    if Vi <= -Vlim:
+        SaturatedV=-Vlim
+    elif Vi >= Vlim:
+        SaturatedV = Vlim
+    elif Vi <= Vlim and Vi >= -Vlim:
+        SaturatedV=Vi
+    return SaturatedV
+
+
 def SDRE(X_path,Y_path):
-    delta_t = 0.01
-    t = 10
+    Vlim=10
+    delta_t =0.05
+    t =10
     x_initial = np.zeros((len(X_path)-1, (int(t / delta_t)) - 1))
     y_initial = np.zeros((len(X_path)-1, (int(t / delta_t)) - 1))
     tetha = np.zeros((len(X_path)-1, (int(t / delta_t)) - 1))
@@ -268,6 +278,7 @@ def SDRE(X_path,Y_path):
     yd1 = np.zeros((len(X_path) - 1, (int(t / delta_t)) - 1))
     yd2 = np.zeros((len(X_path) - 1, (int(t / delta_t)) - 1))
     v = np.zeros((len(X_path) - 1, (int(t / delta_t)) - 1))
+    Vi = np.zeros((len(X_path) - 1, (int(t / delta_t)) - 1))
     w = np.zeros((len(X_path) - 1, (int(t / delta_t)) - 1))
     for j in range(0,len(X_path)-1):
         x=X_path[j]
@@ -298,37 +309,44 @@ def SDRE(X_path,Y_path):
             yd1[j,0]=(m*x_initial[j,0])+n
             yd2[j,0]=m*(x_final-x_initial[j,0])/t
 
-            Q1=np.array([[1,0,0,-1,0,0,0,0],[0,1,0,0,0,-1,0,0],[0,0,1,0,0,0,0,-1]])
+            Q1=np.array([[1,0,0,-1,0,0,0,0,0],[0,1,0,0,0,-1,0,0,0],[0,0,1,0,0,0,0,-1,0]])
             Q2=Q1.transpose()
             I3=np.eye(3,dtype=int)
             Q3=np.dot(Q2,I3)
             Q=np.dot(Q3,Q1)
+            Vi[j,0]=0
 
-            for time in range(0,(int(t/delta_t))-2):
-                A=np.array([[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0],
-                            [0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]])
-                B=np.array([[math.cos(tetha[j,time]),math.sin(tetha[j,time]),0 ,0 ,0 ,0 ,0 ,0],[0 ,0 ,1 ,0 ,0 ,0 ,0 ,0]])
-                A = A - 0.05 * np.eye(8, dtype=int)
-                R = 0.0001 * np.eye(2, dtype=int)
+            for step in range(0,(int(t/delta_t))-2):
+
+                if Vi[j,step]==0:
+                    Vs=1
+                else:
+                    Vs=velocitySaturation(Vi[j,step],Vlim)/Vi[j,step]
+                A=np.array([[0,0,0,0,0,0,0,0,math.cos(tetha[j,step])*Vs],[0,0,0,0,0,0,0,0,math.sin(tetha[j,step])*Vs],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],
+                            [0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]])
+                #B1=np.array([math.cos(tetha[j,step]),math.sin(tetha[j,step]),0 ,0 ,0 ,0 ,0 ,0])
+                B=np.array([[0,0 ,0 ,0 ,0 ,0 ,0,0,1],[0,0,1,0,0,0,0,0,0]])
+                A= A - 0.05 * np.eye(9, dtype=int)
+                R = 0.01* np.eye(2, dtype=int)
                 K,S,E = controlpy.synthesis.controller_lqr(A, B.transpose(), Q, R)
-                u=np.array([x_initial[j,time],y_initial[j,time],tetha[j,time],zd1[j,time],zd2[j,time],yd1[j,time],yd2[j,time],wd1[j,time]])
+                u=np.array([x_initial[j,step],y_initial[j,step],tetha[j,step],zd1[j,step],zd2[j,step],yd1[j,step],yd2[j,step],wd1[j,step],Vi[j,step]])
                 U=np.dot(-K,u.transpose())
 
-                v[j,time]=U[0]#Linear velocity
-                w[j,time]=U[1]#Angular velocity
+                v[j,step]=U[0]#Linear velocity
+                w[j,step]=U[1]#Angular velocity
 
-                '''x_initial[j, time + 1] = x_initial[j, time] + delta_t * (U[0] * math.cos(tetha[j, time]))
-                y_initial[j, time + 1] = y_initial[j, time] + delta_t * (U[0] * math.sin(tetha[j, time]))
-                tetha[j, time + 1] = tetha[j, time] + delta_t * U[1]
-                zd1[j, time + 1] = zd1[j, time] + delta_t * zd2[j, time]
-                zd2[j, time + 1] = zd2[j, time]
-                yd1[j, time + 1] = yd1[j, time] + delta_t * yd2[j, time]
-                yd2[j, time + 1] = yd2[j, time]
-                wd1[j, time + 1] = wd1[j, time]'''
+                x_initial[j, step + 1] = x_initial[j, step] + Vs * delta_t * (Vi[j,step] * math.cos(tetha[j, step]))
+                y_initial[j, step + 1] = y_initial[j, step] + Vs *delta_t * (Vi[j,step] * math.sin(tetha[j, step]))
+                tetha[j, step + 1] = tetha[j, step] + delta_t * U[1]
+                Vi[j,step+1]=Vi[j,step]+delta_t*v[j,step]
+                zd1[j, step + 1] = zd1[j, step] + delta_t * zd2[j, step]
+                zd2[j, step + 1] = zd2[j, step]
+                yd1[j, step + 1] = yd1[j, step] + delta_t * yd2[j, step]
+                yd2[j, step + 1] = yd2[j, step]
+                wd1[j, step + 1] = wd1[j, step]
 
 
-                px,py,th=robot.getPose() # Get current position of the robot
-
+                '''px,py,th=robot.getPose() # Get current position of the robot
                 x_initial[j,time+1]=px
                 y_initial[j,time+1]=py
                 tetha[j,time+1]=th
@@ -336,8 +354,8 @@ def SDRE(X_path,Y_path):
                 zd2[j,time+1]=zd2[j,time]
                 yd1[j,time+1]=yd1[j,time]+delta_t*yd2[j,time]
                 yd2[j,time+1]=yd2[j,time]
-                wd1[j,time+1]=wd1[j,time]
-    return x_initial,y_initial,v,w
+                wd1[j,time+1]=wd1[j,time]'''
+    return x_initial,y_initial,Vi,w
 
 # Converting linear and angular velocities to the left and right velocities
 def Inverse_Kinematics(V,W,d):
@@ -423,7 +441,7 @@ if __name__ == '__main__':
                     plt.annotate(i, xy=(X[x], Y[x]))
                 i = i + 1
             plt.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
-            plt.show()
+            #plt.show()
 
         else:
             voronoiSubsets = Voronoi(n, nextBest_position1[0], nextBest_position2[0])
@@ -516,26 +534,23 @@ if __name__ == '__main__':
         X_path2.append(X[element])
         Y_path2.append(Y[element])
     #plt.plot(X_path2, Y_path2, 'r--', label='Robot2_path')
-
+    TimerStart = time.time()
     trajectory_1 = SDRE(X_path1,Y_path1)
+    print('time1:',time.time() - TimerStart)
+
+    TimerStart = time.time()
     trajectory_2 = SDRE(X_path2, Y_path2)
+    print('time2:', time.time() - TimerStart)
+
     #plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.scatter(trajectory_1[0], trajectory_1[1],s=0.01)
-    plt.scatter(trajectory_2[0], trajectory_2[1],s=0.01)
+    plt.scatter(trajectory_2[0], trajectory_2[1],color='k',s=0.05)
+    #print(np.shape(trajectory_1[2]))
+    print(trajectory_1[2][1])
+    #print(trajectory_1[3][1])
+    #print(trajectory_1[3][2])
+
+    #plt.xlim((-10, 360))
+    #plt.ylim((-10, 360))
+    #print (X[16],Y[16])
     plt.show()
-    v_Robot1=trajectory_1[2]
-    w_Robot1=trajectory_1[3]
-    robotDiameter=25.8
-    for v in range(0,len(v_Robot1)):
-        vR,vL=Inverse_Kinematics(v_Robot1[v],w_Robot1[w],robotDiameter)
-        robot.setWheelVelocities(vR,vL)
-        time.sleep(0.01)
-    robot.go(0, 0)
-    robot.close()
-
-
-
-
-
-
-

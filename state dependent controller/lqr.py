@@ -4,7 +4,7 @@
 from __future__ import print_function, division
 
 import controlpy
-
+import math
 import numpy as np
 
 # Example system is a double integrator:
@@ -30,5 +30,12 @@ print(x)
 X=np.array([1,2,3])
 Y=np.array([[0,1,1],[1,0,0],[0,1,1]])
 Z,S,T=np.dot(X,Y)
-print (type(Z))
+print (Z)
 print (type(K[0]))
+Teta_heading=1.5
+rotational_matrix=np.zeros((2,2))
+rotational_matrix[0,0]=math.cos(Teta_heading)
+rotational_matrix[0,1]=math.sin(Teta_heading)
+rotational_matrix[1,0]=-math.sin(Teta_heading)
+rotational_matrix[1,1]=math.cos(Teta_heading)
+print(rotational_matrix)

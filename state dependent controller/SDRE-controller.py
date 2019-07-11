@@ -254,7 +254,7 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
     return nextBest_position,initialCost_Robot
 # STATE DEPENDENT RICCATI EQUATION TO CONTROL THE ROBOT TO MOVE ALONG THE LINE
 def SDRE(X_path,Y_path):
-    delta_t = 0.01
+    delta_t =0.05
     t = 10
     x_initial = np.zeros((len(X_path)-1, (int(t / delta_t)) - 1))
     y_initial = np.zeros((len(X_path)-1, (int(t / delta_t)) - 1))
@@ -306,7 +306,7 @@ def SDRE(X_path,Y_path):
                             [0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]])
                 B=np.array([[math.cos(tetha[j,time]),math.sin(tetha[j,time]),0 ,0 ,0 ,0 ,0 ,0],[0 ,0 ,1 ,0 ,0 ,0 ,0 ,0]])
                 A = A - 0.05 * np.eye(8, dtype=int)
-                R = 0.0001 * np.eye(2, dtype=int)
+                R = 0.01* np.eye(2, dtype=int)
                 K,S,E = controlpy.synthesis.controller_lqr(A, B.transpose(), Q, R)
                 u=np.array([x_initial[j,time],y_initial[j,time],tetha[j,time],zd1[j,time],zd2[j,time],yd1[j,time],yd2[j,time],wd1[j,time]])
                 U=np.dot(-K,u.transpose())
@@ -516,7 +516,8 @@ if __name__ == '__main__':
     trajectory_1 = SDRE(X_path1,Y_path1)
     trajectory_2 = SDRE(X_path2, Y_path2)
     #plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.scatter(trajectory_1[0], trajectory_1[1],s=0.01)
-    plt.scatter(trajectory_2[0], trajectory_2[1],s=0.01)
+    plt.scatter(trajectory_1[0], trajectory_1[1],s=0.05,color='k')
+    plt.scatter(trajectory_2[0], trajectory_2[1],s=0.05,color='k')
+    print(trajectory_1[2])
 
     plt.show()

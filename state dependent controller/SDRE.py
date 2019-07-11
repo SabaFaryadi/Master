@@ -8,12 +8,12 @@ import os
 # Generating plots
 def CordinateGenerator(w,l,seg):
     # distance between points
-    a = 1
-    b = 1
-    c = 1 / 3
-    d = 1 / 3
-    e = 1 / 3
-    f = 1 / 3
+    a = 100
+    b = 100
+    c = 100 / 3
+    d = 100 / 3
+    e = 100 / 3
+    f = 100 / 3
 
     # X,Y coordinates. Set to a size to accomidate p the total number of points
     p = (w + 1) * (l + 1) + w * l * (seg - 1)
@@ -125,7 +125,7 @@ def SDRE(X_path,Y_path):
                             [0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]])
                 B=np.array([[math.cos(tetha[j,time]),math.sin(tetha[j,time]),0 ,0 ,0 ,0 ,0 ,0],[0 ,0 ,1 ,0 ,0 ,0 ,0 ,0]])
                 A = A - 0.05 * np.eye(8, dtype=int)
-                R = 0.0001 * np.eye(2, dtype=int)
+                R = 0.001 * np.eye(2, dtype=int)
                 K,S,E = controlpy.synthesis.controller_lqr(A, B.transpose(), Q, R)
                 #print((K))
                 u=np.array([x_initial[j,time],y_initial[j,time],tetha[j,time],zd1[j,time],zd2[j,time],yd1[j,time],yd2[j,time],wd1[j,time]])
@@ -149,12 +149,12 @@ if __name__ == '__main__':
     x,y=CordinateGenerator(3,4,5)
     plt.scatter(x, y)
     #plt.show()
-    Xpath=[0,0,1,1.01]
-    Ypath=[0,1,1.01,2]
+    Xpath=[0,0]
+    Ypath=[0,100]
 
     trajectory=SDRE(Xpath,Ypath)
-    #print(trajectory[2][0])
-    #print (trajectory[3][0])
+    print(trajectory[2][0])
+    print (trajectory[3][0])
     #print(trajectory[1])
     plt.scatter(trajectory[0],trajectory[1])
     plt.show()
