@@ -103,8 +103,8 @@ class Graph(object):
 if __name__ == '__main__':
     # Generate all nodes and edges
     graph = Graph()
-    points=MatrixMaker(2,4,4,1)
-    X,Y=CordinateGenerator(2,4,4)
+    points=MatrixMaker(4,5,4,1)
+    X,Y=CordinateGenerator(4,5,4)
 
     rowNumber = 0
     columnNumber = 0
