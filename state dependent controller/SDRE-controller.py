@@ -35,113 +35,86 @@ lb_right = robot.senseFunc(create.LIGHTBUMP_RIGHT)'''
 # seg=number of segments per sections
 # d=distance between points
 def CordinateGenerator(w,l,seg):
-    # distance between points
-    a = 100
-    b = 100
-    c = 100 / 3
-    d = 100/ 3
-    e = 100/ 3
-    f = 100/ 3
-
-    # X,Y coordinates. Set to a size to accomidate p the total number of points
-    p = (w + 1) * (l + 1) + w * l * (seg - 1)
+    a=150
+    b=100
+    c=100
+    d=100
+    p=w*l*seg
     x = np.zeros(p, dtype=float)
     y = np.zeros(p, dtype=float)
 
-    # Loops through every point. Rx and Ry are the running x and y positions
-    # n=0 is assumed to be the origin
-    n = 0
-    Rx = 0
-    Ry = 0
-    for i in range(0, l):
-        x[n] = Rx
-        y[n] = Ry
-        n = n + 1
-        for j in range(0, w):
-            Rx = Rx + c
-            Ry = Ry + d
+    Rx=100
+    Ry=0
+    n=0
+
+    for i in range(0, w):
+        for j in range(0, l):
+            if j == 0:
+                Rx = Rx
+            else:
+                Rx = Rx + (d)
             x[n] = Rx
             y[n] = Ry
             n = n + 1
 
-            Rx = Rx + e
+            Ry = Ry + b
             x[n] = Rx
             y[n] = Ry
             n = n + 1
 
-            Ry = Ry + f
+            Rx = Rx + a
             x[n] = Rx
             y[n] = Ry
             n = n + 1
 
-            Rx = Rx - e
+            Ry = Ry - b
             x[n] = Rx
             y[n] = Ry
             n = n + 1
+        Rx = 100
+        Ry = (i + 1) * (b + c)
+    return x, y
 
-            Rx = Rx - c
-            Ry = Ry + d
-            x[n] = Rx
-            y[n] = Ry
-            n = n + 1
-        Ry = 0
-        Rx = Rx + a
-
-    # clean up for the last row since the numbering pattern breaks
-    Ry = 0
-    for i in range(0, w + 1):
-        x[n] = Rx
-        y[n] = Ry
-        Ry = Ry + b
-        n = n + 1
-    return x,y
 def MatrixMaker(w,l,seg,d):
     # M, our matrix. Set to a size to accomidate p the total number of points
-    p = (w + 1) * (l + 1) + w * l * (seg - 1)
+    p = w*l*seg
     m = np.zeros([p, p], dtype=int)
 
     # create links between vertical bidirectional paths
 
     n = 0
-    for i in range(0, l):
-        for j in range(0, w):
-            m[n, n + seg] = d
-            m[n + seg, n] = d
-            n = n + seg
-        n = n + 1
-    # this handles the last row since the numbering becomes incosistent
-    for i in range(0, w):
-        m[n, n + 1] = d
-        m[n + 1, n] = d
-        n = n + 1
-
-    # create horizontal links between bidirectional paths
-    n = 0
-    for i in range(0, w):
-        n = seg * i
-        for j in range(1, l):
-            m[n, n + 1 + w * seg] = d
-            m[n + 1 + w * seg, n] = d
-            n = n + 1 + w * seg
-
-    # this handles the last row since the numbering becomes inconsistent
-    n = (1 + w * seg) * l
-    h = (1 + w * seg) * (l - 1)
-    for i in range(0, w):
-        m[n, h] = d
-        m[h, n] = d
-        n = n + 1
-        h = h + seg
-
-    # create all directional paths
-    n = 0
-    for i in range(0, l):
-        for j in range(0, seg * w):
-            m[n + 1, n] = d
+    for j in range(0,w):
+        for i in range(0, l):
+            for j in range(0, seg-1):
+                m[n, n + 1] = d
+                n = n + 1
             n = n + 1
-        n = n + 1
-    return m
 
+    for q in range(1,(w*l)+1):
+        r=(4*q)-1
+        m[r,r-3]=d
+    s=0
+    for section in range(1,(l*(w-1))+1):
+
+        m[section+s,section+s+((l*seg)-1)]=d
+        m[section+s + ((l * seg) - 1),section+s] = d
+        s=s+3
+    c=0
+    for counter in range(2,(l*(w-1))+2):
+        m[counter + c, counter + c + ((l * seg) + 1)] = d
+        m[counter + c + ((l * seg) +1), counter + c] = d
+        c = c + 3
+
+    for k in range(0,w):
+        for g in range(1,l):
+            m[(4*g-1)+4*k*l,(4*g-1)+4*k*l+1]=d
+            m[(4*g - 1) + 4 * k*l+1, (4 * g - 1) + 4 * k*l ] = d
+
+    for k in range(0,w):
+        for g in range(1,l):
+            m[(4*g-2)+4*k*l,(4*g-2)+4*k*l+3]=d
+            m[(4*g - 2) + 4 * k*l+3, (4 * g - 2) + 4 * k*l ] = d
+    return m
 # Generating a directed graph for plots
 class Graph(object):
     def __init__(self):
@@ -205,16 +178,27 @@ def shortest_path(graph, origin, destination):
 def Voronoi(n,position_Robot1,position_Robot2):
     subnodes_Robot1 = list()
     subnodes_Robot2 = list()
+    robotSpeed=[20,20]
+    #robotCharge=[100,100]
     for j in range(0, n):
         if j == position_Robot1 or j == position_Robot2:
             continue
         else:
             Robot1_distance = (shortest_path(graph, position_Robot1, j))
-            Robot2_distance = (shortest_path(graph, position_Robot2, j))
-            if (Robot1_distance[0]) <=(Robot2_distance[0]):
-                subnodes_Robot1.append(j)
+                #print('robot1 to node', j, '=', (Robot1_distance[0]))
 
-            elif (Robot2_distance[0])<(Robot1_distance[0]):
+            Robot2_distance = (shortest_path(graph, position_Robot2, j))
+                #print('robot2 to node', j, '=', Robot2_distance[0])
+            t1=(Robot1_distance[0])/robotSpeed[0]
+            t2=(Robot2_distance[0])/robotSpeed[1]
+
+            if t1 <=t2:
+
+                #if ((Robot1_distance[0])/robotSpeed[0])<robotCharge[0]:
+                subnodes_Robot1.append(j)
+            #elif ((Robot1_distance[0])/robotSpeed[0])<robotCharge[1]:
+                    #subnodes_Robot2.append(j)
+            elif t2<t1:
                 subnodes_Robot2.append(j)
 
     return subnodes_Robot1,subnodes_Robot2
@@ -254,7 +238,7 @@ def finding_nextPoint(subnodes_Robot,position_Robot,n):
     return nextBest_position,initialCost_Robot
 # STATE DEPENDENT RICCATI EQUATION TO CONTROL THE ROBOT TO MOVE ALONG THE LINE
 def SDRE(X_path,Y_path):
-    delta_t =0.05
+    delta_t =0.1
     t = 10
     x_initial = np.zeros((len(X_path)-1, (int(t / delta_t)) - 1))
     y_initial = np.zeros((len(X_path)-1, (int(t / delta_t)) - 1))
@@ -344,8 +328,8 @@ def Inverse_Kinematics(V,W,d):
 if __name__ == '__main__':
     # Generate all nodes and edges
     graph = Graph()
-    points=MatrixMaker(3,3,5,1)
-    X,Y=CordinateGenerator(3,3,5)
+    points = MatrixMaker(5, 4, 4, 1)
+    X, Y = CordinateGenerator(5, 4, 4)
     #Get the location of robots and regions of interests
     position_Robot1 = input('Enter Roomba A position:')
     position_Robot2 = input('Enter Roomba B position:')
@@ -355,7 +339,6 @@ if __name__ == '__main__':
     position_Robot2 = int(position_Robot2)
     goal1 = int(goal1)
     goal2 = int(goal2)
-
     rowNumber = 0
     columnNumber = 0
     priorityValue = dict()
@@ -419,9 +402,9 @@ if __name__ == '__main__':
                     plt.annotate(i, xy=(X[x], Y[x]))
                 i = i + 1
             plt.legend(bbox_to_anchor=(1, 1), loc=2, borderaxespad=0.)
-            plt.show()
+            #plt.show()
 
-        else:
+        '''else:
             voronoiSubsets = Voronoi(n, nextBest_position1[0], nextBest_position2[0])
         subnodes_Robot1 = voronoiSubsets[0]
         subnodes_Robot2 = voronoiSubsets[1]
@@ -493,8 +476,11 @@ if __name__ == '__main__':
     plt.plot(X_subnodes_Robot2, Y_subnodes_Robot2, 'bs', markersize=12, label='Robot2_partition')
 
     plt.plot(X[position_Robot1], Y[position_Robot1], 'cs', markersize=20)
-    plt.plot(X[position_Robot2], Y[position_Robot2], 'cs', markersize=20)
-
+    plt.plot(X[position_Robot2], Y[position_Robot2], 'cs', markersize=20)'''
+    position_Robot1=17
+    position_Robot2=0
+    path_Robot2 = [1,2,5,6,9,10,27,24,25,26]
+    path_Robot1 = [18,21,36,37,38,39]
     X_path1 = list()
     Y_path1 = list()
     X_path1.append(X[position_Robot1])
@@ -518,6 +504,7 @@ if __name__ == '__main__':
     #plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.scatter(trajectory_1[0], trajectory_1[1],s=0.05,color='k')
     plt.scatter(trajectory_2[0], trajectory_2[1],s=0.05,color='k')
-    print(trajectory_1[2])
-
+    print(trajectory_1[2][0])
+    plt.xlim(0,1000)
+    plt.ylim(0,900)
     plt.show()
